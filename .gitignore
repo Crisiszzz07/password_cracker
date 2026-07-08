@@ -1,0 +1,13 @@
+
+passwordcracker
+*.exe
+*.exe~
+*.dll
+*.so
+# *.txt
+*.dylib
+.idea/
+*.iws
+*.iml
+.DS_Store
+Thumbs.db
