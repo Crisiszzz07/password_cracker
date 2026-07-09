@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/sha256"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -10,12 +11,15 @@ import (
 	"time"
 )
 
-type InfoReport struct { //estructura para los datos dinámicos de reporte
-	Date       string
-	Hash       string
-	Dictionary string
-	Time       string
-	Result     string
+// InfoReport Acá usamos Struct Tags porque para que un struct sea leido por otros paquetes necesita empezar en mayúsuclas
+// pero en seguridad rara vez las claves de un JSON empiezan con mayúsculas, se prefiere usar snake_case (como event_date)
+// por medio del struct tag, se especifica que en el código un campo se llama por ejemplo Date, pero al convertirse en JSON es "event_date"
+type InfoReport struct { //Estructura para los datos dinámicos de reporte
+	Date       string `json:"event_date"`
+	Hash       string `json:"target_hash"`
+	Dictionary string `json:"dictionary_used"`
+	Time       string `json:"attack_time"`
+	Result     string `json:"decrypted_password"`
 }
 
 func check(e error) { //función para errores en caso de que hayan
@@ -24,6 +28,7 @@ func check(e error) { //función para errores en caso de que hayan
 	}
 }
 
+// FUNCIÓN PARA CREAR ARCHIVOS TXT
 func txtFile(filename string, info InfoReport) error {
 	file, err := os.Create(filename) //NO USAR OS.OPEN PORQUE SOLO TIENE PERMISO DE LECTURA
 
@@ -59,7 +64,18 @@ Attack time     : %s
 
 }
 
-func jsonFile(filename string) error {
+// FUNCIÓN PARA CREAR ARCHIVOS JSON
+func jsonFile(filename string, info InfoReport) error {
+	file, err := os.Create(filename) //NO USAR OS.OPEN PORQUE SOLO TIENE PERMISO DE LECTURA
+	check(err)
+	defer file.Close()
+
+	infoJSON, err := json.Marshal(info) //json.Marshal retorna la versión JSON de info
+	if err != nil {
+		return fmt.Errorf("There was an issue with the JSON encoding: %v", err)
+	}
+	_, err = file.Write(infoJSON) //acá también uso el blank identifier porque no usaré la variable de bytes
+
 	return nil
 }
 
@@ -71,7 +87,8 @@ func getFileExtension(filename string, info InfoReport) error {
 		check(err)
 
 	case ".json": //ARCHIVOS JSON
-
+		err := jsonFile(filename, info)
+		check(err)
 	default:
 		return fmt.Errorf("Unsupported file extension: %s", ext)
 	}
