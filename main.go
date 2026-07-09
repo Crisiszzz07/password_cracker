@@ -6,7 +6,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 )
+
+type InfoReport struct { //estructura para los datos dinámicos de reporte
+	Date       string
+	Hash       string
+	Dictionary string
+	Time       string
+	Result     string
+}
 
 func check(e error) { //función para errores en caso de que hayan
 	if e != nil { //si hay un error, no tendrá el nil por defecto
@@ -14,13 +24,60 @@ func check(e error) { //función para errores en caso de que hayan
 	}
 }
 
-// FUNCIÓN PARA CREAR ARCHIVOS
-func createFile(filename string) (*os.File, error) {
-	f, err := os.Create(filename)
-	check(err)
-	//defer f.Close()
+func txtFile(filename string, info InfoReport) error {
+	file, err := os.Create(filename) //NO USAR OS.OPEN PORQUE SOLO TIENE PERMISO DE LECTURA
 
-	return f, err
+	check(err)
+
+	defer file.Close()
+
+	const plantilla = `==================================================
+🛡️ AUDITORY REPORT - PASSWORD CRACKER
+==================================================
+Event's date'   : %s
+Target Hash     : %s
+Dictionary used : %s
+Attack time     : %s
+--------------------------------------------------
+[+] RESULT      : %s
+==================================================
+`
+
+	//Acá usé el blank identifier porque Fprintf retorna dos valores: un int y un error, pero no tengo intención de usar ese int para nada de momento
+	_, err = fmt.Fprintf(file, plantilla,
+		info.Date,
+		info.Hash,
+		info.Dictionary,
+		info.Time,
+		info.Result)
+
+	if err != nil { //en caso de que haya algún error con la escritura sobre el archivo
+		return fmt.Errorf("There was a problem wrting the report: %v", err)
+	}
+
+	return nil //nil porque esta función retorna un valor de error, si fue exitoso, no necesita retornar un error mas que el nil
+
+}
+
+func jsonFile(filename string) error {
+	return nil
+}
+
+func getFileExtension(filename string, info InfoReport) error {
+	ext := filepath.Ext(filename)
+	switch ext { //TODO: probablemente existe una manera más efectiva de soportar y validar las extensiones pero de momento uso lo que he aprendido
+	case ".txt": //ARCHIVOS TXT
+		err := txtFile(filename, info)
+		check(err)
+
+	case ".json": //ARCHIVOS JSON
+
+	default:
+		return fmt.Errorf("Unsupported file extension: %s", ext)
+	}
+
+	return nil
+	//return filepath.Ext(filename)
 }
 
 func main() {
@@ -57,10 +114,18 @@ func main() {
 	check(err)
 
 	defer f.Close()
-	validacion := false            //solo lo uso porque de momento no me ocurré otra forma de imprimir que no hubo coincidencias
 	scanner := bufio.NewScanner(f) //NewScanner para leer las lineas del archivo
 	for scanner.Scan() {           //se necesita un for para escanear cada linea del contenido del archivo
 
+		//TODO: Revisar cómo poder contar realmente el tiempo de ejecución
+		/*Función defer que intenté para contar la duración total del escaneo pero no sé aun
+		start := time.Now()
+		defer func(start time.Time) (duration time.Duration) {
+			duration = time.Since(start)
+			return duration
+		}(start)
+
+		*/
 		//es mejor usar directamente la función de Bytes del scanner en vez de .Text
 		//porque así no se genera una doble asignación porque uno es de tipo string y lo que pide el []byte es
 		//tipo bytes
@@ -70,25 +135,24 @@ func main() {
 		if targetHash == huellaTexto {
 
 			fmt.Println("La contraseña es:", scanner.Text())
-			validacion = true
 			if *filePtr != "" { //en caso de que se haya decidido crear un archivo
-				//TODO
-				//Mejorar formatos para los tipos de archivos distintos a .txt (ej: json)
-				//Agregar validaciones de extensiones
-				file, err := createFile(*filePtr)
-				if err != nil {
-					fmt.Println(err)
-				}
 
-				defer file.Close() //TODO: revisar porque dice que puede haber un resource leak por llamarlo en for
-				file.WriteString(fmt.Sprintf("%s\n", scanner.Text()))
+				dateNow := time.Now().Format("2006-01-02 15:04:05")
+				dataReport := InfoReport{
+					Date:       dateNow,
+					Hash:       targetHash,
+					Dictionary: *dicPtr,
+					Time:       "ms",
+					Result:     scanner.Text(),
+				}
+				err = getFileExtension(*filePtr, dataReport)
 
 			}
-			break
+			return
 		}
 
 	}
-	if !validacion {
-		fmt.Println("No se encontró ninguna contraseña que coincidiera.")
-	}
+
+	fmt.Println("No se encontró ninguna contraseña que coincidiera.")
+
 }
