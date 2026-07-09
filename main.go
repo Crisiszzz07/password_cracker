@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/sha256"
+	"flag"
 	"fmt"
 	"os"
 )
@@ -14,8 +15,21 @@ func check(e error) { //función para errores en caso de que hayan
 }
 
 func main() {
-	targetHash := "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
-	filePath := "diccionario.txt"
+
+	//flag para targetHash
+
+	hashPtr := flag.String("hash", "", "hash password that wants to be cracked")
+
+	//flag para diccionario
+	dicPtr := flag.String("d", "", "dictionary to use")
+
+	//TODO
+	//flag para directorio para almacenar un archivo resultante con los resultados que coincidan
+	//flag para distintas opciones de algoritmos
+	flag.Parse()
+	targetHash := *hashPtr
+	filePath := *dicPtr
+
 	f, err := os.Open(filePath) //luego con el paquete de os y la función de Open se lee el contenido (que se guarda en f) y el resultado de error (se guard en err, un resultado de nil es igual a 0 error)
 	check(err)
 
@@ -26,7 +40,7 @@ func main() {
 		//es mejor usar directamente la función de Bytes del scanner en vez de .Text
 		//porque así no se genera una doble asignación porque uno es de tipo string y lo que pide el []byte es
 		//tipo bytes
-		huellaBinaria := sha256.Sum256([]byte(scanner.Bytes()))
+		huellaBinaria := sha256.Sum256(scanner.Bytes())
 		//se pasa de binario a texto
 		huellaTexto := fmt.Sprintf("%x", huellaBinaria)
 		if targetHash == huellaTexto {

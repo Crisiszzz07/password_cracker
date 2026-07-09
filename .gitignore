@@ -11,3 +11,4 @@ passwordcracker
 *.iml
 .DS_Store
 Thumbs.db
+/main
