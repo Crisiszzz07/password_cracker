@@ -14,6 +14,15 @@ func check(e error) { //función para errores en caso de que hayan
 	}
 }
 
+// FUNCIÓN PARA CREAR ARCHIVOS
+func createFile(filename string) (*os.File, error) {
+	f, err := os.Create(filename)
+	check(err)
+	//defer f.Close()
+
+	return f, err
+}
+
 func main() {
 
 	//CONFIGURACIÓN DE FLAGS: El programa configura mas no lee aún el contenido de la terminal
@@ -26,8 +35,9 @@ func main() {
 	//flag para diccionario
 	dicPtr := flag.String("d", "", "OBLIGATORY: dictionary to use")
 
+	//flag para almacenar un archivo resultante con los resultados que coincidan
+	filePtr := flag.String("f", "", "OPTIONAL: file to use")
 	//TODO
-	//flag para directorio para almacenar un archivo resultante con los resultados que coincidan
 	//flag para distintas opciones de algoritmos
 	flag.Parse() //Go lee el contenido en la terminal al hacer parsing y almacena teniendo en
 	//cuenta el espacio de memoria al que hace referencia el puntero
@@ -47,6 +57,7 @@ func main() {
 	check(err)
 
 	defer f.Close()
+	validacion := false            //solo lo uso porque de momento no me ocurré otra forma de imprimir que no hubo coincidencias
 	scanner := bufio.NewScanner(f) //NewScanner para leer las lineas del archivo
 	for scanner.Scan() {           //se necesita un for para escanear cada linea del contenido del archivo
 
@@ -59,9 +70,25 @@ func main() {
 		if targetHash == huellaTexto {
 
 			fmt.Println("La contraseña es:", scanner.Text())
+			validacion = true
+			if *filePtr != "" { //en caso de que se haya decidido crear un archivo
+				//TODO
+				//Mejorar formatos para los tipos de archivos distintos a .txt (ej: json)
+				//Agregar validaciones de extensiones
+				file, err := createFile(*filePtr)
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				defer file.Close() //TODO: revisar porque dice que puede haber un resource leak por llamarlo en for
+				file.WriteString(fmt.Sprintf("%s\n", scanner.Text()))
+
+			}
 			break
 		}
 
 	}
-	fmt.Println("No se encontró ninguna contraseña que coincidiera.")
+	if !validacion {
+		fmt.Println("No se encontró ninguna contraseña que coincidiera.")
+	}
 }
