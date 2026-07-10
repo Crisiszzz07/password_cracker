@@ -135,7 +135,19 @@ func main() {
 
 	defer f.Close()
 	scanner := bufio.NewScanner(f) //NewScanner para leer las lineas del archivo
-	for scanner.Scan() {           //se necesita un for para escanear cada linea del contenido del archivo
+	start := time.Now()
+
+	/*
+		puede servir cuando lleve la lógica de algoritmos a funciones independinetes
+		var execTime time.Duration = 0
+		defer func(start time.Time) (duration time.Duration) {
+			duration = time.Since(start)
+			execTime = duration
+			return
+		}(start)
+
+	*/
+	for scanner.Scan() { //se necesita un for para escanear cada linea del contenido del archivo
 
 		//TODO: Revisar cómo poder contar realmente el tiempo de ejecución
 		/*Función defer que intenté para contar la duración total del escaneo pero no sé aun
@@ -153,7 +165,7 @@ func main() {
 		//se pasa de binario a texto
 		huellaTexto := fmt.Sprintf("%x", huellaBinaria)
 		if targetHash == huellaTexto {
-
+			execTime := time.Since(start) //usa la variable start definida al inicio para calcular el tiempo de ejecucion
 			fmt.Println("La contraseña es:", scanner.Text())
 			if *filePtr != "" { //en caso de que se haya decidido crear un archivo
 
@@ -162,7 +174,7 @@ func main() {
 					Date:       dateNow,
 					Hash:       targetHash,
 					Dictionary: *dicPtr,
-					Time:       "ms",
+					Time:       execTime.String(),
 					Result:     scanner.Text(),
 				}
 				err = getFileExtension(*filePtr, dataReport)

@@ -1,0 +1,7 @@
+{
+  "event_date": "2026-07-09 20:05:44",
+  "target_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+  "dictionary_used": "diccionario.txt",
+  "attack_time": "33.051µs",
+  "decrypted_password": "password"
+}
