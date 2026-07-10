@@ -84,12 +84,13 @@ func getFileExtension(filename string, info InfoReport) error {
 	switch ext { //TODO: probablemente existe una manera más efectiva de soportar y validar las extensiones pero de momento uso lo que he aprendido
 	case ".txt": //ARCHIVOS TXT
 		err := txtFile(filename, info)
-		check(err)
+		return err
 
 	case ".json": //ARCHIVOS JSON
 		err := jsonFile(filename, info)
-		check(err)
+		return err
 	default:
+
 		return fmt.Errorf("Unsupported file extension: %s", ext)
 	}
 
@@ -163,7 +164,10 @@ func main() {
 					Result:     scanner.Text(),
 				}
 				err = getFileExtension(*filePtr, dataReport)
-
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
 			}
 			return
 		}
