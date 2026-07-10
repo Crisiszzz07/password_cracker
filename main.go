@@ -70,12 +70,14 @@ func jsonFile(filename string, info InfoReport) error {
 	check(err)
 	defer file.Close()
 
-	infoJSON, err := json.Marshal(info) //json.Marshal retorna la versión JSON de info
+	infoJSON, err := json.MarshalIndent(info, "", "  ") //cambio de json.Marshal para retornar la versión JSON de info a MarchalIndent para un formato más legible
 	if err != nil {
 		return fmt.Errorf("There was an issue with the JSON encoding: %v", err)
 	}
 	_, err = file.Write(infoJSON) //acá también uso el blank identifier porque no usaré la variable de bytes
-
+	if err != nil {
+		return fmt.Errorf("There was an issue writing the JSON file: %v", err)
+	}
 	return nil
 }
 
